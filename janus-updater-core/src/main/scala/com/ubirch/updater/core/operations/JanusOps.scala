@@ -1,15 +1,15 @@
 package com.ubirch.updater.core.operations
 
 import java.util.Date
-import java.util.concurrent.{ CountDownLatch, TimeUnit }
+import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import com.typesafe.scalalogging.LazyLogging
-import gremlin.scala.{ Edge, Key, Vertex }
+import gremlin.scala.{Edge, Key, Vertex}
 import com.ubirch.updater.core.config.Elements._
 import com.ubirch.updater.core.janusgraph.GremlinConnector
 
 import scala.concurrent.Future
-import scala.util.{ Failure, Success }
+import scala.util.{Failure, Success, Try}
 
 object JanusOps extends LazyLogging {
 
@@ -52,18 +52,25 @@ object JanusOps extends LazyLogging {
     gc.g.V(device).inE().l()
   }
 
-  def getVertexTimestamp(vertex: Vertex)(implicit gc: GremlinConnector): Date = {
-    gc.g.V(vertex).value[Date](timestampProp).head()
+  def getVertexTimestamp(vertex: Vertex)(implicit gc: GremlinConnector): Try[Date] = {
+
+    Try(gc.g.V(vertex).value[Date](timestampProp).head())
+
   }
 
   def putUppTimestampOnEdge(upp: Vertex, edge: Edge)(implicit gc: GremlinConnector): Unit = {
     uppCount += 1
-    putTimestampOnEdge(getVertexTimestamp(upp), edge)
+    val timestamp = getVertexTimestamp(upp)
+    putTimestampOnEdge(timestamp, edge)
   }
 
-  def putTimestampOnEdge(timestamp: Date, edge: Edge)(implicit gc: GremlinConnector): Unit = {
+  def putTimestampOnEdge(timestamp: Try[Date], edge: Edge)(implicit gc: GremlinConnector): Unit = {
     //if (!edgeHasTimestamp(edge)) {
-    gc.g.E(edge).property(Key[Date](timestampProp), timestamp).iterate()
+    if (timestamp.isFailure) {
+      throw new Exception(s"Date not found for edge ${edge.id()}")
+    } else {
+      gc.g.E(edge).property(Key[Date](timestampProp), timestamp.get).iterate()
+    }
     //logger.info(s"     did edge ${edge.id()}")
     //} else {
     //  logger.info(s"     Edge ${edge.id()} already has a timestamp")
@@ -116,7 +123,7 @@ object JanusOps extends LazyLogging {
     }
   }
 
-  def processEdgesAsynch(edges: List[Edge], execute: Edge => Unit, counter: Int)(implicit gc: GremlinConnector): Unit = {
+  def processEdgesAsynch(edges: List[Edge], execute: Edge => Unit, counter: Int = -1)(implicit gc: GremlinConnector): Unit = {
     val partitionSize = 8
     val edgesPartition = edges.grouped(partitionSize).toList
     var count = 0
@@ -143,10 +150,10 @@ object JanusOps extends LazyLogging {
           latch.countDown()
       }
       latch.await()
-      Thread.sleep(50)
-      //logger.debug(s"FINISHED processing a batch of ${edges.size} vertices asynchronously")
+      Thread.sleep(5)
+      logger.debug(s"FINISHED processing a batch of ${edges.size} vertices asynchronously")
       count += edges.size
-      logger.info(s"Processed ${counter + count} edges")
+      //logger.info(s"Processed ${counter + count} edges")
     }
     logger.info(s"Took ${System.currentTimeMillis() - t0}ms to process ${edges.size} edges")
   }

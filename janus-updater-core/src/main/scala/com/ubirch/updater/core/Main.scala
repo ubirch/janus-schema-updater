@@ -1,11 +1,14 @@
 package com.ubirch.updater.core
 
-import com.typesafe.scalalogging.LazyLogging
-import com.ubirch.updater.core.janusgraph.{ ConnectorType, GremlinConnector, GremlinConnectorFactory }
-import com.ubirch.updater.core.operations.JanusOps._
-import gremlin.scala.Edge
+import java.util.Date
 
-import scala.concurrent.{ Await, Future }
+import com.typesafe.scalalogging.LazyLogging
+import com.ubirch.updater.core.config.Elements.timestampProp
+import com.ubirch.updater.core.janusgraph.{ConnectorType, GremlinConnector, GremlinConnectorFactory}
+import com.ubirch.updater.core.operations.JanusOps._
+import gremlin.scala.{Edge, Key, P}
+
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -18,7 +21,30 @@ object Main extends LazyLogging {
     implicit val gc: GremlinConnector = GremlinConnectorFactory.getInstance(ConnectorType.JanusGraph)
 
     //find all non-updates edges
-    doItForAllEdges()
+    val startTime: Long = 1576648566000L // start date is the 18th december 2019
+    val increment: Long = 1000*60*60L
+    def doItByTimestamp(): Unit = {
+      var edges: List[Edge] = gc.g.V().has(Key[Date](timestampProp), P.inside(new Date(startTime), new Date(startTime + increment))).outE().l()
+      var currentTime = startTime + increment
+      while(currentTime < System.currentTimeMillis()) {
+        val time_low = new Date(currentTime)
+
+        val (le2: List[Edge], _) = parallel(getEdgesInBetween(currentTime, currentTime + increment), processEdgesAsynch(edges, treatEdgesWithoutTimestamp))
+        edges = le2
+        logger.info(s"Found ${le2.size} edges between ${time_low.toString} and ${new Date(currentTime).toString}. Treating them. Some might be duplicates")
+        val t0 = System.currentTimeMillis()
+        currentTime += increment
+        logger.info(s"Done for the time period ${time_low.toString} - ${new Date(currentTime).toString} in ${System.currentTimeMillis() - t0}ms")
+      }
+    }
+
+    def getEdgesInBetween(start: Long, end: Long) = {
+      logger.info(s"Looking for edges between ${new Date(start)} and ${new Date(end).toString}.")
+      gc.g.V().has(Key[Date](timestampProp), P.inside(new Date(startTime), new Date(end))).outE().l()
+    }
+
+    doItByTimestamp()
+    //doItForAllEdges()
 
     // update UPP->DEVICE
     //    val devices = getDevices
