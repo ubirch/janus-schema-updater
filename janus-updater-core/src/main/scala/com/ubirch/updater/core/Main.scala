@@ -38,7 +38,7 @@ object Main extends LazyLogging {
 
     def getEdgesInBetween(start: Long, end: Long) = {
       logger.info(s"---- 2 ---- Looking for edges between ${new Date(start)} and ${new Date(end).toString}.")
-      val res = gc.g.V().has(Key[Date](timestampProp), P.inside(new Date(startTime), new Date(end))).outE().l()
+      val res = gc.g.V().has(Key[Date](timestampProp), P.inside(new Date(start), new Date(end))).outE().l()
       logger.info(s"---- 2 ---- Found ${res.size} edges between ${new Date(start).toString} and ${new Date(end).toString}.")
       res
     }
