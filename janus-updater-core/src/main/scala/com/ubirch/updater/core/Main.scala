@@ -42,6 +42,15 @@ object Main extends LazyLogging {
       res
     }
 
+    def doTheEdges(edges: List[Edge]): Unit = {
+      var counter = 0
+      edges.foreach{e => {
+        counter += 1
+        treatEdgesWithoutTimestamp(e)
+        if (counter % 50 == 0) logger.info(s"Made ${counter} edges in this batch")
+      }}
+    }
+
     doItByTimestamp()
     //doItForAllEdges()
 
