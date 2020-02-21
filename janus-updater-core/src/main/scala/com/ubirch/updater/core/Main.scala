@@ -28,17 +28,18 @@ object Main extends LazyLogging {
       var currentTime = startTime + increment
       while(currentTime < System.currentTimeMillis()) {
         val t0 = System.currentTimeMillis()
-        val (le2: List[Edge], _) = parallel(getEdgesInBetween(currentTime, currentTime + increment),  doTheEdges(edges))
-        edges = le2
+        doTheEdges(edges)
+        //val (le2: List[Edge], _) = parallel(getEdgesInBetween(currentTime, currentTime + increment),  doTheEdges(edges))
+        edges = getEdgesInBetween(currentTime, currentTime + increment)
         currentTime += increment
         logger.info(s"--- g --- Done for the time period ${new Date(currentTime - increment).toString} - ${new Date(currentTime).toString} in ${System.currentTimeMillis() - t0}ms")
       }
     }
 
     def getEdgesInBetween(start: Long, end: Long) = {
-      logger.info(s"---- 1 ---- Looking for edges between ${new Date(start)} and ${new Date(end).toString}.")
+      logger.info(s"---- 2 ---- Looking for edges between ${new Date(start)} and ${new Date(end).toString}.")
       val res = gc.g.V().has(Key[Date](timestampProp), P.inside(new Date(startTime), new Date(end))).outE().l()
-      logger.info(s"---- 1 ---- Found ${res.size} edges between ${new Date(start).toString} and ${new Date(end).toString}.")
+      logger.info(s"---- 2 ---- Found ${res.size} edges between ${new Date(start).toString} and ${new Date(end).toString}.")
       res
     }
 
@@ -47,9 +48,9 @@ object Main extends LazyLogging {
       edges.foreach{e => {
         counter += 1
         treatEdgesWithoutTimestamp(e)
-        if (counter % 50 == 0) logger.info(s"--- 2 --- Made ${counter} edges in this batch of ${edges.size}")
+        if (counter % 50 == 0) logger.info(s"--- 1 --- Made ${counter} edges in this batch of ${edges.size}")
       }}
-      logger.info(s"--- 2 --- Finished processing batch of ${edges.size}")
+      logger.info(s"--- 1 --- Finished processing batch of ${edges.size}")
     }
 
     doItByTimestamp()
