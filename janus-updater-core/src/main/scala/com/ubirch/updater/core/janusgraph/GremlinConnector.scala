@@ -1,6 +1,6 @@
-package main.scala.com.ubirch.upgrader.core.janusgraph
+package com.ubirch.updater.core.janusgraph
 
-import gremlin.scala.{ScalaGraph, TraversalSource}
+import gremlin.scala.{ ScalaGraph, TraversalSource }
 import org.apache.tinkerpop.gremlin.process.traversal.Bindings
 
 trait GremlinConnector {

@@ -1,4 +1,4 @@
-package main.scala.com.ubirch.upgrader.core.janusgraph
+package com.ubirch.updater.core.janusgraph
 
 import org.apache.tinkerpop.gremlin.process.traversal.Bindings
 

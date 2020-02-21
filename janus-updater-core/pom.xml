@@ -4,13 +4,13 @@
     <modelVersion>4.0.0</modelVersion>
     <!-- parent pom -->
     <parent>
-        <groupId>com.ubirch.upgrader</groupId>
-        <artifactId>janus-upgrader</artifactId>
+        <groupId>com.ubirch.updater</groupId>
+        <artifactId>janus-updater</artifactId>
         <version>0.1.0</version>
     </parent>
 
     <!-- basic info -->
-    <artifactId>core</artifactId>
+    <artifactId>janus-updater-core</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <name>${project.artifactId}</name>
     <description>core module of the Ubirch janus schema upgrader</description>
@@ -31,6 +31,10 @@
         <scalatest-maven-plugin.version>1.0</scalatest-maven-plugin.version>
         <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
         <maven-deploy-plugin.version>2.8.2</maven-deploy-plugin.version>
+        <dockerfile-maven-plugin.version>1.4.4</dockerfile-maven-plugin.version>
+        <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
+
+
         <!-- plugins -->
 
         <!-- versions -->
@@ -104,7 +108,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>com.ubirch.lookup.Service</mainClass>
+                            <mainClass>com.ubirch.upgrader.core.Main</mainClass>
                             <useUniqueVersions>false</useUniqueVersions>
                         </manifest>
                     </archive>
@@ -119,6 +123,60 @@
                 <configuration>
                     <skip>true</skip>
                 </configuration>
+            </plugin>
+
+
+            <!-- create and/or push the created docker image -->
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>dockerfile-maven-plugin</artifactId>
+                <version>${dockerfile-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>default</id>
+                        <goals>
+                            <goal>build</goal>
+                            <goal>push</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <buildDirectory>${project.build.outputDirectory}</buildDirectory>
+                    <repository>ubirch/${project.artifactId}</repository>
+                    <tag>${build.number}</tag>
+                    <buildArgs>
+                        <VERSION>${project.version}</VERSION>
+                        <BUILD>${build.number}</BUILD>
+                        <SERVICE_NAME>${project.name}</SERVICE_NAME>
+                        <JAR_LIBS>target/lib</JAR_LIBS>
+                        <JAR_FILE>target/${project.build.finalName}.${project.packaging}</JAR_FILE>
+                    </buildArgs>
+                </configuration>
+            </plugin>
+
+            <!-- copies helm charts folder to target/helm-charts and replaces the docker image tag -->
+            <!-- https://stackoverflow.com/questions/10923944/maven-resources-plugin-error-using-copy-resources-goal-resources-outputdire -->
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>${maven-resources-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/helm-charts</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>../helm-charts</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>

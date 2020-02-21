@@ -1,7 +1,7 @@
-package main.scala.com.ubirch.upgrader.core.janusgraph
+package com.ubirch.updater.core.janusgraph
 
 import com.typesafe.config.Config
-import main.scala.com.ubirch.upgrader.core.janusgraph.ConnectorType.ConnectorType
+import com.ubirch.updater.core.janusgraph.ConnectorType.ConnectorType
 import org.apache.commons.configuration.PropertiesConfiguration
 
 object GremlinConnectorFactory {

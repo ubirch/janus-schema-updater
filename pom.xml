@@ -4,8 +4,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <!-- info -->
-    <groupId>com.ubirch.upgrader</groupId>
-    <artifactId>janus-upgrader</artifactId>
+    <groupId>com.ubirch.updater</groupId>
+    <artifactId>janus-updater</artifactId>
     <version>0.1.0</version>
     <packaging>pom</packaging>
 
@@ -301,7 +301,7 @@
 
     <!-- sub modules -->
     <modules>
-        <module>core</module>
+        <module>janus-updater-core</module>
     </modules>
 
 </project>
