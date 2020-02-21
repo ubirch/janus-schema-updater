@@ -47,8 +47,9 @@ object Main extends LazyLogging {
       edges.foreach{e => {
         counter += 1
         treatEdgesWithoutTimestamp(e)
-        if (counter % 50 == 0) logger.info(s"Made ${counter} edges in this batch")
+        if (counter % 50 == 0) logger.info(s"--- 2 --- Made ${counter} edges in this batch of ${edges.size}")
       }}
+      logger.info(s"--- 2 --- Finished processing batch of ${edges.size}")
     }
 
     doItByTimestamp()
