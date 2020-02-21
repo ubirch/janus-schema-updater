@@ -28,7 +28,7 @@ object Main extends LazyLogging {
       var currentTime = startTime + increment
       while(currentTime < System.currentTimeMillis()) {
         val t0 = System.currentTimeMillis()
-        val (le2: List[Edge], _) = parallel(getEdgesInBetween(currentTime, currentTime + increment),  edges.foreach(treatEdgesWithoutTimestamp))
+        val (le2: List[Edge], _) = parallel(getEdgesInBetween(currentTime, currentTime + increment),  doTheEdges(edges))
         edges = le2
         currentTime += increment
         logger.info(s"--- g --- Done for the time period ${new Date(currentTime - increment).toString} - ${new Date(currentTime).toString} in ${System.currentTimeMillis() - t0}ms")
