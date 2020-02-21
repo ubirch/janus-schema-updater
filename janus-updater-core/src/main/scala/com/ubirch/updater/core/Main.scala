@@ -28,19 +28,17 @@ object Main extends LazyLogging {
       var currentTime = startTime + increment
       while(currentTime < System.currentTimeMillis()) {
         val t0 = System.currentTimeMillis()
-        val (le2: List[Edge], _) = parallel(getEdgesInBetween(currentTime, currentTime + increment), processEdgesAsynch(edges, treatEdgesWithoutTimestamp))
+        val (le2: List[Edge], _) = parallel(getEdgesInBetween(currentTime, currentTime + increment),  edges.foreach(treatEdgesWithoutTimestamp))
         edges = le2
-        //logger.info(s"Found ${le2.size} edges between ${new Date(currentTime).toString} and ${new Date(currentTime).toString}. Treating them. Some might be duplicates")
-        //val t0 = System.currentTimeMillis()
         currentTime += increment
-        logger.info(s"Done for the time period ${new Date(currentTime - increment).toString} - ${new Date(currentTime).toString} in ${System.currentTimeMillis() - t0}ms")
+        logger.info(s"--- g --- Done for the time period ${new Date(currentTime - increment).toString} - ${new Date(currentTime).toString} in ${System.currentTimeMillis() - t0}ms")
       }
     }
 
     def getEdgesInBetween(start: Long, end: Long) = {
-      logger.info(s"Looking for edges between ${new Date(start)} and ${new Date(end).toString}.")
+      logger.info(s"---- 1 ---- Looking for edges between ${new Date(start)} and ${new Date(end).toString}.")
       val res = gc.g.V().has(Key[Date](timestampProp), P.inside(new Date(startTime), new Date(end))).outE().l()
-      logger.info(s"Found ${res.size} edges between ${new Date(start).toString} and ${new Date(end).toString}. Treating them. Some might be duplicates")
+      logger.info(s"---- 1 ---- Found ${res.size} edges between ${new Date(start).toString} and ${new Date(end).toString}.")
       res
     }
 

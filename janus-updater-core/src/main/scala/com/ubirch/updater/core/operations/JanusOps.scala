@@ -67,9 +67,13 @@ object JanusOps extends LazyLogging {
   def putTimestampOnEdge(timestamp: Try[Date], edge: Edge)(implicit gc: GremlinConnector): Unit = {
     //if (!edgeHasTimestamp(edge)) {
     if (timestamp.isFailure) {
-      throw new Exception(s"Date not found for edge ${edge.id()}")
+      logger.error(s"Timestamp not found for edge ${edge.id()}")
     } else {
-      gc.g.E(edge).property(Key[Date](timestampProp), timestamp.get).iterate()
+      try {
+        gc.g.E(edge).property(Key[Date](timestampProp), timestamp.get).iterate()
+      } catch {
+        case e: Exception => logger.error(s"Something happened: ${e.toString}")
+      }
     }
     //logger.info(s"     did edge ${edge.id()}")
     //} else {
