@@ -133,11 +133,11 @@ object JanusOps extends LazyLogging {
     var count = 0
     val t0 = System.currentTimeMillis()
 
-    edgesPartition foreach { edges =>
+    edgesPartition foreach { es =>
       //logger.info(s"STARTED processing a batch of ${edges.size} edges asynchronously")
       val processesOfFutures = scala.collection.mutable.ListBuffer.empty[Future[Unit]]
       import scala.concurrent.ExecutionContext.Implicits.global
-      edges.foreach { edge =>
+      es.foreach { edge =>
         //logger.debug(s"edge: ${edge.id()}")
         val process = Future(execute(edge))
         processesOfFutures += process
@@ -156,7 +156,7 @@ object JanusOps extends LazyLogging {
       latch.await()
       Thread.sleep(5)
       //logger.debug(s"FINISHED processing a batch of ${edges.size} vertices asynchronously")
-      count += edges.size
+      count += es.size
       if (count % 50 == 0) logger.info(s" ---- 1 ---- Made $count edges in this batch of ${edges.size}")
       //logger.info(s"Processed ${counter + count} edges")
     }
