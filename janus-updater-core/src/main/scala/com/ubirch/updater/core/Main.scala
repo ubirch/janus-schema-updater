@@ -29,18 +29,20 @@ object Main extends LazyLogging {
     }
 
     //find all non-updates edges
-    val startTime: Long = findStartTime().getTime //1576648566000L // start date is the 18th december 2019
+    val startTime: Long = findStartTime().getTime
     logger.info(s"---- g ---- Start time is ${new Date(startTime).toString}")
     val increment: Long = 1000*60*60L // 1 hour
     def doItByTimestamp(): Unit = {
 
       var currentTime = startTime
+      var edges = getEdgesInBetween(currentTime, currentTime + increment)
+      currentTime += increment
       while(currentTime < System.currentTimeMillis()) {
         val t0 = System.currentTimeMillis()
         //doTheEdges(edges)
-        //val (le2: List[Edge], _) = parallel(getEdgesInBetween(currentTime, currentTime + increment), doTheEdges(edges))
-        val edges = getEdgesInBetween(currentTime, currentTime + increment)
-        doTheEdges(edges)
+        val (newEdges: List[Edge], _) = parallel(getEdgesInBetween(currentTime, currentTime + increment), doTheEdges(edges))
+        edges = newEdges
+        //doTheEdges(edges)
         logger.info(s"---- g ---- Done for the time period ${new Date(currentTime).toString} - ${new Date(currentTime + increment).toString} in ${System.currentTimeMillis() - t0}ms")
         logger.info(s"---- g ---- Saving progress")
         updateStartTime(currentTime)
