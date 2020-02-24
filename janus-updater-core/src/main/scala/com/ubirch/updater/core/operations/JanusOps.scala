@@ -154,7 +154,7 @@ object JanusOps extends LazyLogging {
           latch.countDown()
       }
       latch.await()
-      Thread.sleep(5)
+      //Thread.sleep(5)
       //logger.debug(s"FINISHED processing a batch of ${edges.size} vertices asynchronously")
       count += es.size
       if (count % 80 == 0) logger.info(s" ---- 1 ---- Made $count edges in this batch of ${edges.size}")
