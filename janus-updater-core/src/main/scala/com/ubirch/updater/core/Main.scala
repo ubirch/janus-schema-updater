@@ -20,27 +20,40 @@ object Main extends LazyLogging {
     logger.info("Connecting to janusgraph server.")
     implicit val gc: GremlinConnector = GremlinConnectorFactory.getInstance(ConnectorType.JanusGraph)
 
+    def findStartTime() = {
+      gc.g.V().has(Key[String]("hash"), "CONTROL_VERTEX").value(Key[Date]("timestamp")).l().head
+    }
+
+    def updateStartTime(time: Long) = {
+      gc.g.V().has(Key[String]("hash"), "CONTROL_VERTEX").property(Key[Date]("timestamp"), new Date(time)).iterate()
+    }
+
     //find all non-updates edges
-    val startTime: Long = 1576648566000L // start date is the 18th december 2019
-    val increment: Long = 1000*60*60L
+    val startTime: Long = findStartTime().getTime //1576648566000L // start date is the 18th december 2019
+    val increment: Long = 1000*60*60L // 1 hour
     def doItByTimestamp(): Unit = {
-      var edges: List[Edge] = gc.g.V().has(Key[Date](timestampProp), P.inside(new Date(startTime), new Date(startTime + increment))).outE().l()
+
       var currentTime = startTime + increment
       while(currentTime < System.currentTimeMillis()) {
         val t0 = System.currentTimeMillis()
-        doTheEdges(edges)
+        //doTheEdges(edges)
         //val (le2: List[Edge], _) = parallel(getEdgesInBetween(currentTime, currentTime + increment),  doTheEdges(edges))
-        edges = getEdgesInBetween(currentTime, currentTime + increment)
+        val edges = getEdgesInBetween(currentTime, currentTime + increment)
+        doTheEdges(edges)
+        logger.info(s"---- g ---- Done for the time period ${new Date(currentTime).toString} - ${new Date(currentTime + increment).toString} in ${System.currentTimeMillis() - t0}ms")
+        logger.info(s"---- g ---- Saving progress")
+        updateStartTime(currentTime)
+        logger.info(s"---- g ---- Progress has been saved")
         currentTime += increment
-        logger.info(s"--- g --- Done for the time period ${new Date(currentTime - increment).toString} - ${new Date(currentTime).toString} in ${System.currentTimeMillis() - t0}ms")
       }
     }
 
     def getEdgesInBetween(start: Long, end: Long) = {
       logger.info(s"---- 2 ---- Looking for edges between ${new Date(start)} and ${new Date(end).toString}.")
-      val res = gc.g.V().has(Key[Date](timestampProp), P.inside(new Date(start), new Date(end))).outE().l()
-      logger.info(s"---- 2 ---- Found ${res.size} edges between ${new Date(start).toString} and ${new Date(end).toString}.")
-      res
+      val theEdges = gc.g.V().has(Key[Date](timestampProp), P.inside(new Date(start), new Date(end))).hasNot(Key[String]("device_id")).outE().l()
+
+      logger.info(s"---- 2 ---- Found ${theEdges.size} edges between ${new Date(start).toString} and ${new Date(end).toString}.")
+      theEdges
     }
 
     def doTheEdges(edges: List[Edge]): Unit = {
@@ -48,12 +61,15 @@ object Main extends LazyLogging {
       edges.foreach{e => {
         counter += 1
         treatEdgesWithoutTimestamp(e)
-        if (counter % 50 == 0) logger.info(s"--- 1 --- Made ${counter} edges in this batch of ${edges.size}")
+        if (counter % 50 == 0) logger.info(s"---- 1 ---- Made ${counter} edges in this batch of ${edges.size}")
       }}
-      logger.info(s"--- 1 --- Finished processing batch of ${edges.size}")
+      logger.info(s"---- 1 ---- Finished processing batch of ${edges.size}")
     }
 
     doItByTimestamp()
+
+
+
     //doItForAllEdges()
 
     // update UPP->DEVICE
