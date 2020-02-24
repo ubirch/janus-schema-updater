@@ -38,7 +38,7 @@ object Main extends LazyLogging {
       while(currentTime < System.currentTimeMillis()) {
         val t0 = System.currentTimeMillis()
         //doTheEdges(edges)
-        //val (le2: List[Edge], _) = parallel(getEdgesInBetween(currentTime, currentTime + increment),  doTheEdges(edges))
+        //val (le2: List[Edge], _) = parallel(getEdgesInBetween(currentTime, currentTime + increment), doTheEdges(edges))
         val edges = getEdgesInBetween(currentTime, currentTime + increment)
         doTheEdges(edges)
         logger.info(s"---- g ---- Done for the time period ${new Date(currentTime).toString} - ${new Date(currentTime + increment).toString} in ${System.currentTimeMillis() - t0}ms")
@@ -52,18 +52,12 @@ object Main extends LazyLogging {
     def getEdgesInBetween(start: Long, end: Long) = {
       logger.info(s"---- 2 ---- Looking for edges between ${new Date(start)} and ${new Date(end).toString}.")
       val theEdges = gc.g.V().has(Key[Date](timestampProp), P.between(new Date(start), new Date(end))).outE().l()
-
       logger.info(s"---- 2 ---- Found ${theEdges.size} edges between ${new Date(start).toString} and ${new Date(end).toString}.")
       theEdges
     }
 
     def doTheEdges(edges: List[Edge]): Unit = {
       processEdgesAsynch(edges, treatEdgesWithoutTimestamp)
-/*      edges.foreach{e => {
-        counter += 1
-        treatEdgesWithoutTimestamp(e)
-        if (counter % 50 == 0) logger.info(s"---- 1 ---- Made ${counter} edges in this batch of ${edges.size}")
-      }}*/
       logger.info(s"---- 1 ---- Finished processing batch of ${edges.size}")
     }
 

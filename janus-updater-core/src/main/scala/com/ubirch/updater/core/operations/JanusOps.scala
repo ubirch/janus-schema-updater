@@ -128,7 +128,7 @@ object JanusOps extends LazyLogging {
   }
 
   def processEdgesAsynch(edges: List[Edge], execute: Edge => Unit, counter: Int = -1)(implicit gc: GremlinConnector): Unit = {
-    val partitionSize = 5
+    val partitionSize = 8
     val edgesPartition = edges.grouped(partitionSize).toList
     var count = 0
     val t0 = System.currentTimeMillis()
@@ -157,7 +157,7 @@ object JanusOps extends LazyLogging {
       Thread.sleep(5)
       //logger.debug(s"FINISHED processing a batch of ${edges.size} vertices asynchronously")
       count += es.size
-      if (count % 50 == 0) logger.info(s" ---- 1 ---- Made $count edges in this batch of ${edges.size}")
+      if (count % 80 == 0) logger.info(s" ---- 1 ---- Made $count edges in this batch of ${edges.size}")
       //logger.info(s"Processed ${counter + count} edges")
     }
     logger.info(s"Took ${System.currentTimeMillis() - t0}ms to process ${edges.size} edges")
