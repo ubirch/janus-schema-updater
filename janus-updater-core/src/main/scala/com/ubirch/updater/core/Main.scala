@@ -30,10 +30,11 @@ object Main extends LazyLogging {
 
     //find all non-updates edges
     val startTime: Long = findStartTime().getTime //1576648566000L // start date is the 18th december 2019
+    logger.info(s"---- g ---- Start time is ${new Date(startTime).toString}")
     val increment: Long = 1000*60*60L // 1 hour
     def doItByTimestamp(): Unit = {
 
-      var currentTime = startTime + increment
+      var currentTime = startTime
       while(currentTime < System.currentTimeMillis()) {
         val t0 = System.currentTimeMillis()
         //doTheEdges(edges)
@@ -50,19 +51,19 @@ object Main extends LazyLogging {
 
     def getEdgesInBetween(start: Long, end: Long) = {
       logger.info(s"---- 2 ---- Looking for edges between ${new Date(start)} and ${new Date(end).toString}.")
-      val theEdges = gc.g.V().has(Key[Date](timestampProp), P.inside(new Date(start), new Date(end))).hasNot(Key[String]("device_id")).outE().l()
+      val theEdges = gc.g.V().has(Key[Date](timestampProp), P.between(new Date(start), new Date(end))).outE().l()
 
       logger.info(s"---- 2 ---- Found ${theEdges.size} edges between ${new Date(start).toString} and ${new Date(end).toString}.")
       theEdges
     }
 
     def doTheEdges(edges: List[Edge]): Unit = {
-      var counter = 0
-      edges.foreach{e => {
+      processEdgesAsynch(edges, treatEdgesWithoutTimestamp)
+/*      edges.foreach{e => {
         counter += 1
         treatEdgesWithoutTimestamp(e)
         if (counter % 50 == 0) logger.info(s"---- 1 ---- Made ${counter} edges in this batch of ${edges.size}")
-      }}
+      }}*/
       logger.info(s"---- 1 ---- Finished processing batch of ${edges.size}")
     }
 
